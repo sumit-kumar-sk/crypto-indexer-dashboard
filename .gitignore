@@ -1,0 +1,36 @@
+# Environment variables - NEVER commit this file
+.env
+
+# Dependencies
+node_modules/
+server/node_modules/
+client/node_modules/
+
+# Build outputs
+client/build/
+client/dist/
+
+# Logs
+*.log
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+
+# OS files
+.DS_Store
+Thumbs.db
+
+# IDE files
+.vscode/
+.idea/
+*.swp
+*.swo
+*~
+
+# Database
+server/prisma/dev.db
+server/prisma/dev.db-journal
+server/dev.db
+server/dev.db-journal
+*.db
+*.db-journal
