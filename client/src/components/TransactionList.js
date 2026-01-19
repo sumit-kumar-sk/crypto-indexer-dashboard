@@ -1,114 +1,74 @@
-/**
- * TransactionList Component
- * 
- * Displays a list of transactions in a clean, readable table format
- */
-
 import React from 'react';
 
-function TransactionList({ transactions, address }) {
-  /**
-   * Truncates long addresses for better display
-   */
-  const truncateAddress = (addr) => {
-    if (!addr || addr.length < 10) return addr;
-    return `${addr.slice(0, 6)}...${addr.slice(-4)}`;
+function TransactionList({ transactions, address, onSelectTransaction }) {
+  const truncate = (str) => str ? `${str.slice(0, 10)}...${str.slice(-8)}` : 'N/A';
+
+  const isOutgoing = (tx) => {
+    if (!address) return false;
+    return tx.from.toLowerCase() === address.trim().toLowerCase();
   };
 
-  /**
-   * Formats timestamp to readable date
-   */
-  const formatTimestamp = (timestamp) => {
-    if (!timestamp || timestamp === 'N/A') return 'N/A';
-    try {
-      const date = new Date(timestamp);
-      return date.toLocaleString();
-    } catch {
-      return timestamp;
+  const handleRowClick = (tx) => {
+    if (onSelectTransaction) {
+      onSelectTransaction(tx);
     }
-  };
-
-  /**
-   * Determines if transaction is incoming or outgoing
-   */
-  const getTransactionType = (tx) => {
-    if (!tx || !tx.to) return 'OUT';
-    return tx.to.toLowerCase() === address.toLowerCase() ? 'IN' : 'OUT';
-  };
-
-  /**
-   * Gets the correct explorer link based on chain
-   */
-  const getExplorerLink = (hash, chain) => {
-    if (chain === 'BTC') return `https://blockstream.info/tx/${hash}`;
-    return `https://etherscan.io/tx/${hash}`;
   };
 
   if (!transactions || transactions.length === 0) {
     return (
-      <div className="transaction-list empty">
-        <div className="empty-state">
-          <p>No transactions found for this address.</p>
-          <p className="empty-hint">Note: Only transactions in indexed blocks will appear here.</p>
-        </div>
+      <div className="empty-state">
+        <p>No transactions found in this view.</p>
+        <p className="empty-hint">Network data is indexed in real-time. Global feeds refresh automatically.</p>
       </div>
     );
   }
 
   return (
-    <div className="transaction-list">
-      <div className="table-container">
-        <table className="transaction-table">
-          <thead>
-            <tr>
-              <th>Type</th>
-              <th>Hash</th>
-              <th>From</th>
-              <th>To</th>
-              <th>Value</th>
-              <th>Asset</th>
-              <th>Timestamp</th>
-            </tr>
-          </thead>
-          <tbody>
-            {transactions.map((tx, index) => (
-              <tr key={`${tx.hash}-${index}`} className="transaction-row">
+    <div className="table-container">
+      <table className="transaction-table">
+        <thead>
+          <tr>
+            <th>Hash</th>
+            {address && <th>Type</th>}
+            <th>From</th>
+            <th>To</th>
+            <th>Value</th>
+            <th>Asset</th>
+            <th>Time</th>
+          </tr>
+        </thead>
+        <tbody>
+          {transactions.map((tx, index) => (
+            <tr 
+              key={`${tx.hash}-${index}`} 
+              className={`transaction-row ${onSelectTransaction ? 'clickable-row' : ''}`}
+              onClick={() => handleRowClick(tx)}
+            >
+              <td className="hash-column">
+                <span className="hash-link">{truncate(tx.hash)}</span>
+              </td>
+              {address && (
                 <td>
-                  <span className={`tx-type ${getTransactionType(tx).toLowerCase()}`}>
-                    {getTransactionType(tx)}
+                  <span className={`tx-type ${isOutgoing(tx) ? 'out' : 'in'}`}>
+                    {isOutgoing(tx) ? 'OUT' : 'IN'}
                   </span>
                 </td>
-                <td className="hash-cell">
-                  <a
-                    href={getExplorerLink(tx.hash, tx.chain)}
-                    target="_blank"
-                    rel="noopener noreferrer"
-                    className="hash-link"
-                    title={tx.hash}
-                  >
-                    {truncateAddress(tx.hash)}
-                  </a>
-                </td>
-                <td className="address-cell" title={tx.from}>
-                  {truncateAddress(tx.from)}
-                </td>
-                <td className="address-cell" title={tx.to}>
-                  {truncateAddress(tx.to)}
-                </td>
-                <td className="value-cell">
-                  {tx.value}
-                </td>
-                <td className="asset-cell">
-                  <span className="asset-badge">{tx.asset}</span>
-                </td>
-                <td className="timestamp-cell">
-                  {formatTimestamp(tx.timestamp)}
-                </td>
-              </tr>
-            ))}
-          </tbody>
-        </table>
-      </div>
+              )}
+              <td className="addr-column">{truncate(tx.from)}</td>
+              <td className="addr-column">{truncate(tx.to)}</td>
+              <td className="value-column">
+                <span className="value-text">{tx.value}</span>
+              </td>
+              <td className="asset-column">
+                <span className="asset-badge">{tx.asset}</span>
+              </td>
+              <td className="time-column">
+                {new Date(tx.timestamp).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}
+              </td>
+            </tr>
+          ))}
+        </tbody>
+      </table>
     </div>
   );
 }

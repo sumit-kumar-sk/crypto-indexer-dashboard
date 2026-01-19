@@ -1,6 +1,6 @@
 # Multi-Chain Crypto Indexer & Dashboard 🚀
 
-A professional, self-hosted blockchain explorer and transaction indexer for **Ethereum** and **Bitcoin**. This application scans blocks in real-time, stores data in a local database, and provides a premium dashboard for monitoring network activity.
+A professional, self-hosted blockchain explorer and transaction indexer for **Ethereum** and **Bitcoin**. This application scans blocks in real-time, stores data in PostgreSQL, provides Redis caching, and offers a premium dashboard for monitoring network activity.
 
 ## 🏗️ Architecture Overview
 
@@ -8,12 +8,15 @@ The application follows a modern, decoupled architecture designed for high perfo
 
 ```
 ┌─────────────┐       ┌─────────────┐       ┌────────────────┐
-│   React     │ <───> │   Express   │ <───> │   SQLite (DB)  │
+│   React     │ <──── │   Express   │ <──── │  PostgreSQL    │
 │  Frontend   │       │   Backend   │       │   via Prisma   │
 └─────────────┘       └─────┬───────┘       └────────────────┘
-                            │
-              ┌─────────────┴─────────────┐
-              │      Cron Indexers        │
+                            │                      ▲
+                      ┌─────┴─────┐                │
+                      │   Redis   │ (Caching)      │
+                      └───────────┘                │
+              ┌─────────────┴─────────────┐        │
+              │      Cron Indexers        │────────┘
               │  (Background Services)    │
               └─────────────┬─────────────┘
                     ┌───────┴───────┐
@@ -24,8 +27,9 @@ The application follows a modern, decoupled architecture designed for high perfo
 ```
 
 - **Background Sync**: Dedicated cron jobs sync the latest blocks for both ETH and BTC.
-- **Data Persistence**: Uses Prisma ORM with SQLite for local, zero-config data storage.
-- **Premium Dashboard**: Real-time feeds for blocks and global network activity.
+- **Data Persistence**: Uses Prisma ORM with PostgreSQL for robust data storage.
+- **Redis Caching**: API responses are cached for improved performance.
+- **Wallet Search**: Search any wallet address and view transaction details in-app.
 - **Secure**: All RPC keys are isolated on the backend.
 
 ---
@@ -37,10 +41,25 @@ Follow these steps to set up the project on your local machine.
 ### 1. Prerequisites
 - **Node.js** (v18 or higher)
 - **npm** (comes with Node.js)
+- **Docker & Docker Compose** (for PostgreSQL and Redis)
 - **Alchemy API Key** (for ETH) - [alchemy.com](https://www.alchemy.com/)
 - **Bitcoin RPC Node** (Optional) - Default uses a public node.
 
-### 2. Environment Configuration
+### 2. Start Database Services (Docker)
+Start PostgreSQL and Redis using Docker Compose:
+```bash
+docker-compose up -d
+```
+This starts:
+- **PostgreSQL** on port `5432` (user: `postgres`, password: `postgres123`, db: `crypto_indexer`)
+- **Redis** on port `6379`
+
+To stop the services:
+```bash
+docker-compose down
+```
+
+### 3. Environment Configuration
 From the project root, create a `.env` file:
 ```bash
 cp .env.example .env
@@ -49,16 +68,21 @@ Update the `.env` file with your credentials:
 ```env
 # Ethereum Configuration
 ALCHEMY_API_KEY=your_alchemy_key_here
-ETH_RPC_URL=https://eth-mainnet.g.alchemy.com/v2/your_key_here
 
 # Bitcoin Configuration
 BTC_RPC_URL=https://bitcoin-rpc.publicnode.com
+
+# PostgreSQL Database (Docker)
+DATABASE_URL=postgresql://postgres:postgres123@localhost:5432/crypto_indexer
+
+# Redis Caching (Docker)
+REDIS_URL=redis://localhost:6379
 
 # Server Configuration
 PORT=5000
 ```
 
-### 3. Installation & Database Setup
+### 4. Installation & Database Setup
 Install dependencies and initialize the database:
 
 **Backend:**
