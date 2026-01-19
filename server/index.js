@@ -1,13 +1,3 @@
-/**
- * Crypto Indexer Backend Server
- * 
- * This is the main entry point for the backend API server.
- * It acts as a secure proxy between the frontend and blockchain indexing services.
- * 
- * Security: API keys are loaded from .env and NEVER exposed to the frontend.
- */
-
-// Load environment variables from .env file FIRST
 require('dotenv').config({ path: '../.env' });
 
 const express = require('express');
@@ -15,26 +5,21 @@ const cors = require('cors');
 const transactionRoutes = require('./routes/transactions');
 
 const { initIndexers } = require('./indexer');
+const { initRedis } = require('./services/redis');
 
-// Initialize Express application
 const app = express();
-
-// Configuration
 const PORT = process.env.PORT || 5000;
 
-// Start Blockchain Indexers
+initRedis();
 initIndexers().catch(err => {
   console.error("Failed to initialize indexers:", err);
 });
 
-// Middleware
-// Enable CORS for frontend communication
 app.use(cors({
-  origin: 'http://localhost:3000', // React development server
+  origin: 'http://localhost:3000',
   credentials: true
 }));
 
-// Parse JSON request bodies
 app.use(express.json());
 
 // Request logging middleware
@@ -43,7 +28,6 @@ app.use((req, res, next) => {
   next();
 });
 
-// API Routes
 app.use('/api', transactionRoutes);
 
 // Health check endpoint

@@ -3,12 +3,6 @@ const { PrismaClient } = require('@prisma/client');
 const cron = require('node-cron');
 
 const prisma = new PrismaClient();
-// RPC Endpoint provided by user via .env
-const BTC_RPC_URL = process.env?.BTC_RPC_URL;
-
-/**
- * Helper to make RPC calls
- */
 async function rpcCall(method, params = []) {
   const response = await axios.post(BTC_RPC_URL, {
     jsonrpc: "1.0",
@@ -132,7 +126,7 @@ async function syncBtc() {
 
 function startBtcIndexer() {
   console.log("🚀 Starting Bitcoin Cron Indexer (JSON-RPC)...");
-  syncBtc(); // Initial run
+  syncBtc();
   cron.schedule('*/10 * * * *', syncBtc); 
 }
 

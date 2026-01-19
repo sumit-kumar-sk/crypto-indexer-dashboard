@@ -85,7 +85,6 @@ async function syncEth() {
 
 function startEthIndexer() {
   console.log("🚀 Starting Ethereum Cron Indexer (Every 12s)...");
-  // ETH blocks are ~12s. We run every 12s.
   cron.schedule('*/12 * * * * *', syncEth);
 }
 
